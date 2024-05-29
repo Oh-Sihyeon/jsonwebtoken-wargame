@@ -1,10 +1,20 @@
 const crypto = require('crypto')
-const salt = 'ingoo'
+const fs = require('fs');
+const path = require('path');
+
+// 키 파일 경로
+const keyFilePath = path.join(__dirname, '../models/keyfile.txt');
+
+// 키 파일 내용을 읽어오는 함수
+function getKey() {
+    return fs.readFileSync(keyFilePath, 'utf8').trim();
+}
  
 function createToken(state, expiresIn = '5m') { // 기본값을 '5m'로
     const header = {
         typ: 'JWT',
-        alg: 'HS256'
+        alg: 'HS256',
+        kid: 'keyfile.txt'
     };
 
     // 만료 시간 설정
@@ -52,7 +62,8 @@ function encoding(value) {
 // signature 생성 함수
 function createSignature(header, payload) {
     const encoding = `${header}.${payload}`;
-    const signature = crypto.createHmac('sha256', salt)
+    const key = getKey();
+    const signature = crypto.createHmac('sha256', key)
         .update(encoding)
         .digest('base64')
         .replace(/\+/g, '-') // '+'를 '-'로 변경
@@ -66,9 +77,9 @@ function createSignature(header, payload) {
 function verifyToken(token) {
     const [header, payload, signature] = token.split('.');
     const verifiedSignature = createSignature(header, payload);
-    // if (signature !== verifiedSignature) {
-    //     throw new Error('Invalid signature');
-    // }
+    if (signature !== verifiedSignature) {
+        throw new Error('Invalid signature');
+    }
 
     const decodedPayload = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
     if (decodedPayload.exp < Math.floor(Date.now() / 1000)) {
