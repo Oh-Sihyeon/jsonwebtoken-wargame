@@ -2,22 +2,22 @@ const express = require('express');
 const nunjucks = require('nunjucks');
 const cookieParser = require('cookie-parser');
 const { users, admins } = require('./models/account.js');
-const { createToken } = require('./utils/jwt.js');
+const { createToken, verifyToken } = require('./utils/jwt.js');
 const { auth, isAuthenticated, isAdmin } = require('./middlewares/auth.js');
 
 const app = express()
- 
+
 // 뷰 엔진 설정
 app.set('view engine', 'html');
 nunjucks.configure('./views', {
     express: app,
     watch: true
 });
- 
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(auth);
- 
+
 // 홈페이지
 app.get('/', (req, res) => {
     const { user } = req;
@@ -27,12 +27,12 @@ app.get('/', (req, res) => {
 app.get('/login', (req, res) => {
     res.render('login.html');
 });
-//사용자 프로필 페이지
+// 사용자 프로필 페이지
 app.get('/userprofile', isAuthenticated, (req, res) => {
     const { user } = req;
     res.render('userprofile.html', { user });
 });
-//관리자 프로필 페이지
+// 관리자 프로필 페이지
 app.get('/adminprofile', isAuthenticated, isAdmin, (req, res) => {
     res.render('adminprofile.html');
 });
@@ -59,26 +59,31 @@ app.post('/login', (req, res) => {
         };
 
         // JWT 생성
-        const token = createToken(payload)
-        
-        // 생성한 토큰을 쿠키로 만들어서 브라우저에게 전달
-        res.cookie('AccessToken', token, {
-            path: '/',
-            HttpOnly: true
-        })
-        res.redirect('/')
-        
-    } catch(err) {
-        console.log(err)
-        res.send('로그인 실패')
+        createToken(payload, '5m', (error, token) => {
+            if (error) {
+                console.log(error);
+                return res.send('로그인 실패');
+            }
+
+            // 생성한 토큰을 쿠키로 만들어서 브라우저에게 전달
+            res.cookie('AccessToken', token, {
+                path: '/',
+                HttpOnly: true
+            });
+            res.redirect('/');
+        });
+
+    } catch (err) {
+        console.log(err);
+        res.send('로그인 실패');
     }
 });
 
 // 로그 아웃 = 쿠키 삭제
-app.get('/logout', (req, res)=>{
-    res.clearCookie('AccessToken', {path: '/'})
-    res.redirect('/')
-})
+app.get('/logout', (req, res) => {
+    res.clearCookie('AccessToken', { path: '/' });
+    res.redirect('/');
+});
 
 // 서버 리스닝
 app.listen(3000, () => {

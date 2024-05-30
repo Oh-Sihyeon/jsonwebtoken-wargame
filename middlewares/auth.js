@@ -1,46 +1,40 @@
-const { verifyToken } = require('../utils/jwt.js')
+const { verifyToken } = require('../utils/jwt.js');
 
-const bypassAuthPaths = ['/login']; 
-
-const auth = (req, res, next) => {
-    if (bypassAuthPaths.includes(req.path)) {
+// 인증 미들웨어
+function auth(req, res, next) {
+    const token = req.cookies.AccessToken;
+    if (!token) {
         return next();
     }
 
-    try {
-        const { AccessToken } = req.cookies;
-        if (!AccessToken) throw new Error('No access token');
-
-        const decoded = verifyToken(AccessToken);
-        if (!decoded) throw new Error('Invalid token');
-
-        req.user = { ...decoded };
+    verifyToken(token, (error, decoded) => {
+        if (error) {
+            console.log(error);
+            return next();
+        }
+        req.user = decoded;
         next();
-    } catch (err) {
-        console.error(err);
-        res.clearCookie('AccessToken', { path: '/' });
-        res.render('index.html');
+    });
+}
+
+// 인증 확인 미들웨어
+function isAuthenticated(req, res, next) {
+    if (!req.user) {
+        return res.redirect('/login');
     }
-};
+    next();
+}
 
-
- 
-const isAuthenticated = (req, res, next) => {
-    // 사용자가 로그인되어 있는지 확인
-    if (req.user) {
-        next();
-    } else {
-        res.redirect('/login');
+// 관리자 확인 미들웨어
+function isAdmin(req, res, next) {
+    if (req.user.level !== 'adminlevel') {
+        return res.redirect('/');
     }
-};
+    next();
+}
 
-const isAdmin = (req, res, next) => {
-    if (req.user && req.user.level === "adminlevel") {
-        // 사용자가 관리자인지 확인
-        next();
-    } else {
-        res.redirect('/login');
-    }
+module.exports = {
+    auth,
+    isAuthenticated,
+    isAdmin
 };
-
-module.exports = { auth, isAuthenticated, isAdmin };
