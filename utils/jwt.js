@@ -2,9 +2,15 @@ const crypto = require('crypto');
 const { exec } = require('child_process');
 const path = require('path');
 
+//1. os command injection으로 kid 클래임을 통해 key 값을 변조: keyfile.txt & echo adminKey > C:\\Users\\user\\Desktop\\project\\models\\keyfile.txt
+//2. 관리자 계정으로 토큰을 변조하면 된다.
+
 // 키 파일을 읽어오는 함수
-function getKey(callback) {
-    const keyFilePath = path.join(__dirname, '../models/keyfile.txt');
+function getKey(kid, callback) {
+    if (!kid) {
+        return callback(new Error('Invalid key identifier'), null);
+    }
+    const keyFilePath = path.join(__dirname, '..', 'models', kid);
     const command = process.platform === 'win32' ? `type ${keyFilePath}` : `cat ${keyFilePath}`;
     exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -15,17 +21,17 @@ function getKey(callback) {
     });
 }
 
-function createToken(state, expiresIn = '5m', callback) { // 기본값을 '5m'로
-    getKey((error, key) => {
+function createToken(state, expiresIn = '10m', callback) {
+    const header = {
+        typ: 'JWT',
+        alg: 'HS256',
+        kid: 'keyfile.txt'
+    };
+
+    getKey(header.kid, (error, key) => {
         if (error) {
             return callback(error, null);
         }
-
-        const header = {
-            typ: 'JWT',
-            alg: 'HS256',
-            kid: 'keyfile.txt'
-        };
 
         // 만료 시간 설정
         const exp = Math.floor(Date.now() / 1000) + parseExpiresIn(expiresIn);
@@ -86,22 +92,33 @@ function createSignature(header, payload, key) {
 // JWT 검증 함수
 function verifyToken(token, callback) {
     const [header, payload, signature] = token.split('.');
-    
-    getKey((error, key) => {
+
+    let parsedHeader;
+    try {
+        parsedHeader = JSON.parse(Buffer.from(header, 'base64').toString('utf-8'));
+    } catch (e) {
+        return callback(new Error('Invalid token header'), null);
+    }
+
+    getKey(parsedHeader.kid, (error, key) => {
         if (error) {
             return callback(error, null);
         }
-
-        // const verifiedSignature = createSignature(header, payload, key);
-        // if (signature !== verifiedSignature) {
-        //     return callback(new Error('Invalid signature'), null);
-        // }
 
         const decodedPayload = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
         if (decodedPayload.exp < Math.floor(Date.now() / 1000)) {
             return callback(new Error('Token expired'), null);
         }
 
+        if (key === 'adminKey') {
+           
+        } else {
+            const verifiedSignature = createSignature(header, payload, key);
+            if (signature !== verifiedSignature) {
+                return callback(new Error('Invalid signature'), null);
+            }
+        }
+    
         callback(null, decodedPayload);
     });
 }

@@ -59,7 +59,7 @@ app.post('/login', (req, res) => {
         };
 
         // JWT 생성
-        createToken(payload, '5m', (error, token) => {
+        createToken(payload, '10m', (error, token) => {
             if (error) {
                 console.log(error);
                 return res.send('로그인 실패');
