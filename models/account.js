@@ -10,7 +10,7 @@ const users = [
 const admins = [
     {
         userid: 'admin',
-        userpw: 'admin',
+        userpw: 'YWRtaW4=',
         username: '관리자'
     }
 ];

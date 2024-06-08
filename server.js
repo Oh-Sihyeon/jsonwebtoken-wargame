@@ -49,7 +49,7 @@ app.post('/login', (req, res) => {
     }
 
     try {
-        if (!authenticatedUser) throw new Error('일치하는 아이디가 존재하지 않음');
+        if (!authenticatedUser) throw new Error('Matching ID does not exist');
 
         // payload 설정
         const payload = {
@@ -62,7 +62,7 @@ app.post('/login', (req, res) => {
         createToken(payload, '10m', (error, token) => {
             if (error) {
                 console.log(error);
-                return res.send('로그인 실패');
+                return res.send('Login failed');
             }
 
             // 생성한 토큰을 쿠키로 만들어서 브라우저에게 전달
@@ -75,7 +75,7 @@ app.post('/login', (req, res) => {
 
     } catch (err) {
         console.log(err);
-        res.send('로그인 실패');
+        res.send('Login failed');
     }
 });
 
