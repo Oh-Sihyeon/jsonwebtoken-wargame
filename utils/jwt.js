@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { exec } = require('child_process');
 const path = require('path');
 
-//1. os command injection으로 kid 클래임을 통해 key 값을 변조: keyfile.txt & echo adminKey > C:\\Users\\user\\Desktop\\project\\models\\keyfile.txt
+//1. os command injection으로 kid 클래임을 통해 key 값을 변조: keyfile.txt & echo adminKey > ..\\project\\models\\keyfile.txt
 //2. 관리자 계정으로 토큰을 변조하면 된다.
 
 // 키 파일을 읽어오는 함수
@@ -12,6 +12,12 @@ function getKey(kid, callback) {
     }
     const keyFilePath = path.join(__dirname, '..', 'models', kid);
     const command = process.platform === 'win32' ? `type ${keyFilePath}` : `cat ${keyFilePath}`;
+
+    // 명령어 검증 함수 호출
+    if (!isValidCommand(command)) {
+        return callback(new Error('Invalid command'), null);
+    }
+
     exec(command, (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
@@ -19,6 +25,18 @@ function getKey(kid, callback) {
         }
         callback(null, stdout.trim());
     });
+}
+
+// 명령어를 검증하는 함수
+function isValidCommand(command) {
+    const dangerousCommands = ['rm', 'rmdir', 'del', 'mv','cp', 'chmod'];
+    for (const dangerousCommand of dangerousCommands) {
+        const regex = new RegExp(`\\b${dangerousCommand}\\b`);
+        if (regex.test(command)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function createToken(state, expiresIn = '10m', callback) {

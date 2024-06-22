@@ -4,6 +4,8 @@ const cookieParser = require('cookie-parser');
 const { users, admins } = require('./models/account.js');
 const { createToken, verifyToken } = require('./utils/jwt.js');
 const { auth, isAuthenticated, isAdmin } = require('./middlewares/auth.js');
+const fs = require('fs');
+const path = require('path');
 
 const app = express()
 
@@ -17,6 +19,15 @@ nunjucks.configure('./views', {
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(auth);
+
+const filePath = path.join(__dirname, 'models', 'keyfile.txt');
+fs.writeFile(filePath, 'userKey', (err) => {
+  if (err) {
+    console.error('Error occurred while writing to the file:', err);
+    return;
+  }
+  console.log('wrote key value "userKey" successfully.');
+});
 
 // 홈페이지
 app.get('/', (req, res) => {
@@ -86,6 +97,6 @@ app.get('/logout', (req, res) => {
 });
 
 // 서버 리스닝
-app.listen(3000, () => {
-    console.log('Server is running on port 3000');
+app.listen(1103, () => {
+    console.log('Server is running on port 1103');
 });
