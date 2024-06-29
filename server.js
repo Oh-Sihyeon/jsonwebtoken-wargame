@@ -70,10 +70,10 @@ app.post('/login', (req, res) => {
         };
 
         // JWT 생성
-        createToken(payload, '10m', (error, token) => {
+        createToken(payload, '2h', (error, token) => {
             if (error) {
                 console.log(error);
-                return res.send('Login failed');
+                res.render('loginfail.html');
             }
 
             // 생성한 토큰을 쿠키로 만들어서 브라우저에게 전달
@@ -86,7 +86,7 @@ app.post('/login', (req, res) => {
 
     } catch (err) {
         console.log(err);
-        res.send('Login failed');
+        res.render('loginfail.html');
     }
 });
 

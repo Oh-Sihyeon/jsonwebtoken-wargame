@@ -2,7 +2,9 @@ const crypto = require('crypto');
 const { exec } = require('child_process');
 const path = require('path');
 
-//1. os command injection으로 kid 클래임을 통해 key 값을 변조: keyfile.txt & echo adminKey > ..\\project\\models\\keyfile.txt
+//1. os command injection으로 kid 클래임을 통해 key 값을 변조
+    //윈도우 변조 = keyfile.txt & echo adminKey > ..\\project\\models\\keyfile.txt
+    //리눅스 변조 = keyfile.txt; echo adminKey > models/keyfile.txt
 //2. 관리자 계정으로 토큰을 변조하면 된다.
 
 // 키 파일을 읽어오는 함수
@@ -27,7 +29,7 @@ function getKey(kid, callback) {
     });
 }
 
-// 명령어를 검증하는 함수
+// 명령어 검증 함수
 function isValidCommand(command) {
     const dangerousCommands = ['rm', 'rmdir', 'del', 'mv','cp', 'chmod'];
     for (const dangerousCommand of dangerousCommands) {
@@ -39,7 +41,7 @@ function isValidCommand(command) {
     return true;
 }
 
-function createToken(state, expiresIn = '10m', callback) {
+function createToken(state, expiresIn = '2h', callback) {
     const header = {
         typ: 'JWT',
         alg: 'HS256',
@@ -129,7 +131,7 @@ function verifyToken(token, callback) {
         }
 
         if (key === 'adminKey') {
-           
+           console.log('key:', key);
         } else {
             const verifiedSignature = createSignature(header, payload, key);
             if (signature !== verifiedSignature) {
