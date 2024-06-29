@@ -24,7 +24,7 @@
               {% if user.level === "userlevel" %}
               <button onclick="location.href='/userprofile'" class="btn btn-sm btn-success">프로필</button>
               <hr/>
-              {% else %}
+              {% elif user.level === "adminlevel" %}
               <button onclick="location.href='/adminprofile'" class="btn btn-sm btn-info">프로필</button>
               <hr/>
           {% endif %}
