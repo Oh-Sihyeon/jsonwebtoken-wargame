@@ -21,10 +21,10 @@
           </p>
           <hr/>
           <h3 class="overview-normalize">PROFILE</h3>
-              {% if user.level === "userlevel" %}
+              {% if user.userid === "user" %}
               <button onclick="location.href='/userprofile'" class="btn btn-sm btn-success">프로필</button>
               <hr/>
-              {% elif user.level === "adminlevel" %}
+              {% elif user.userid === "admin" %}
               <button onclick="location.href='/adminprofile'" class="btn btn-sm btn-info">프로필</button>
               <hr/>
           {% endif %}

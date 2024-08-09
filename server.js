@@ -54,8 +54,7 @@ app.post('/login', (req, res) => {
         // payload 설정
         const payload = {
             userid: authenticatedUser.userid,
-            username: authenticatedUser.username,
-            level: users.includes(authenticatedUser) ? "userlevel" : "adminlevel" // 사용자인 경우 level 1, 관리자인 경우 level 2로 가정
+            username: authenticatedUser.username
         };
 
         // JWT 생성

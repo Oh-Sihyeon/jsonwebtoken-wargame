@@ -35,7 +35,7 @@ const isAuthenticated = (req, res, next) => {
 };
 
 const isAdmin = (req, res, next) => {
-    if (req.user && req.user.level === "adminlevel") {
+    if (req.user && req.user.username === "관리자" && req.user.userid === "admin") {
         // 사용자가 관리자인지 확인
         next();
     } else {
